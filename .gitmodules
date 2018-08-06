@@ -1,0 +1,3 @@
+[submodule "python/simplex"]
+	path = python/simplex
+	url = https://github.com/aserebryakov/simplex.git
