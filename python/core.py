@@ -2,33 +2,6 @@ import vim
 from simplex import Tokenizer
 from simplex import Token
 
-data = '''
-if (true) {
-  ifif
-}
-else
-{
-}
-
-if (true)
-  do
-else if
-{
-    do something else
-}
-
-switch (test) {
-  case 0:
-  {
-  }
-  case 1:
-  {
-  }
-  case 3:
-  case 4:
-
-}
-'''
 
 def handler_generic(match_object, kind, value, keywords, state):
     column = match_object.start() - state['line_start']
@@ -44,9 +17,19 @@ def handler_newline(match_object, kind, value, keywords, state):
     state['line_num'] += 1
 
 
+def get_data_range():
+    vim.command('normal mz')
+    endline = int(vim.eval('line(".")'))
+    vim.command('normal [[')
+    startline = int(vim.eval('line(".")'))
+    vim.command("normal 'z")
+    return (startline, endline)
+
 def core_main():
+    startline, endline = get_data_range()
+
     tokenizer = Tokenizer({
-        'line_num' : 1,
+        'line_num' : startline,
         'line_start' : 0
     })
 
@@ -57,9 +40,15 @@ def core_main():
     tokenizer.add_token('SCOPE_END', r'}', handler_generic)
     tokenizer.add_token('MISMATCH', r'.', handler_skip)
 
+    data = '\n'.join(vim.current.buffer[startline - 1 : endline - 1])
     estimate_stack(tokenizer.tokenize(data))
 
 
+# Branch Start -> Scope Start -> Branch Start
+# Branch Start -> Scope Start -> Scope End -> Alternative Branch
+#                                                     ^
+#                                                     |
+#                                         Decision to remove tokens is here
 def estimate_stack(tokens):
     stack = []
 
@@ -68,7 +57,13 @@ def estimate_stack(tokens):
             stack.append(token)
         elif token.kind == 'SCOPE_END':
             stack.pop()
+            while stack[-1].kind == 'BRANCH_START' or stack[-1].kind == 'BRANCH_ALTERNATIVE':
+                stack.pop()
 
-    vim.command('set errorformat=%f:%l')
-    vim.command('lexpr [' + ','.join(["'{}:{}'".format(vim.current.buffer.name, str(token.line)) for token in stack]) + ']')
+    vim.command('set errorformat=%f:%l:%m')
+    vim.command('lexpr [' +
+        ','.join(["'{}:{}:{}'".format(vim.current.buffer.name, token.line, vim.current.buffer[token.line - 1])
+        for token in stack
+        if token.kind != 'SCOPE_START']) +
+        ']')
 
