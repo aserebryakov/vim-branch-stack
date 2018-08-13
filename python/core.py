@@ -1,3 +1,4 @@
+import vim
 from simplex import Tokenizer
 from simplex import Token
 
@@ -12,6 +13,9 @@ else
 if (true)
   do
 else if
+{
+    do something else
+}
 
 switch (test) {
   case 0:
@@ -39,6 +43,7 @@ def handler_newline(match_object, kind, value, keywords, state):
     state['line_start'] = match_object.end()
     state['line_num'] += 1
 
+
 def core_main():
     tokenizer = Tokenizer({
         'line_num' : 1,
@@ -52,6 +57,18 @@ def core_main():
     tokenizer.add_token('SCOPE_END', r'}', handler_generic)
     tokenizer.add_token('MISMATCH', r'.', handler_skip)
 
-    for token in tokenizer.tokenize(data):
-        print(token)
+    estimate_stack(tokenizer.tokenize(data))
+
+
+def estimate_stack(tokens):
+    stack = []
+
+    for token in tokens:
+        if token.kind == 'BRANCH_START' or token.kind == 'SCOPE_START' or token.kind == 'BRANCH_ALTERNATIVE':
+            stack.append(token)
+        elif token.kind == 'SCOPE_END':
+            stack.pop()
+
+    vim.command('set errorformat=%f:%l')
+    vim.command('lexpr [' + ','.join(["'{}:{}'".format(vim.current.buffer.name, str(token.line)) for token in stack]) + ']')
 
