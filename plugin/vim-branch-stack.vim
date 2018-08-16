@@ -23,16 +23,17 @@
 
 " TODO: Document
 function! VimBranchStackFind()
-  let s:script_folder_path = escape(expand('<sfile>:p:h'),'\')  
-
 python3 << EOF
+
 import sys, os
 import vim
 script_folder = vim.eval('s:script_folder_path')
 
 # TODO: Handle the adding the same path multiple times on pack-add
-sys.path.insert(0, os.path.join(script_folder, 'python'))
-sys.path.insert(0, os.path.join(script_folder, 'python', 'simplex'))
+sys.path.insert(0, os.path.join(script_folder, '..', 'python'))
+sys.path.insert(0, os.path.join(script_folder, '..', 'python', 'simplex'))
+print(sys.path)
+
 import core
 
 core.core_main()
@@ -44,7 +45,8 @@ endfunction
 "Plugin startup code
 if !exists('g:vimbranchstack_plugin')
   let g:vimbranchstack_plugin = 1
- 
+  let s:script_folder_path = escape(expand('<sfile>:p:h'),'\')
+
   command! BranchStack silent call VimBranchStackFind()
 endif
 
