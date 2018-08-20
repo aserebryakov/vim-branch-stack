@@ -122,6 +122,9 @@ def estimate_stack(tokens):
 
     vim.command('set errorformat=%f:%l:%m')
 
+    # Clear location window from previous locations
+    vim.command('lexpr []')
+
     filtered_stack = (token for token in processor.stack if token.kind != 'SCOPE_START')
 
     for depth, token in enumerate(filtered_stack):
