@@ -18,6 +18,17 @@ int main() { // Function start
             }
             else if (x == true) // Alternative branch
             {
+                // Snip
+            }
+            else if (x == true) // Another alternative branch
+            {
+                if (true) foo();
+
+                if (true)
+                    foo();
+                else
+                    bar();
+
                 if (y == false) { // Nested branch
                     // Do something
                 }

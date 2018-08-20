@@ -28,6 +28,8 @@ class TokenProcessor:
             self.handle_scope_start()
         elif token.kind == 'SCOPE_END':
             self.handle_scope_end()
+        elif token.kind == 'EXPRESSION_END':
+            self.handle_expression_end()
 
         self.stack.append(token)
 
@@ -67,6 +69,12 @@ class TokenProcessor:
     def handle_scope_end(self):
         self.state = 'SCOPE_END'
 
+    def handle_expression_end(self):
+        if self.state == 'BRANCH_START' or self.state == 'ALTERNATIVE_BRANCH':
+            self.stack.pop()
+
+        self.stack.pop()
+
 
 def handler_generic(match_object, kind, value, keywords, state):
     column = match_object.start() - state['line_start']
@@ -100,6 +108,7 @@ def core_main():
 
     tokenizer.add_token('BRANCH_START', r'\b(?<!#)if\b|\bswitch\b|\bfor\b|\bwhile\b', handler_generic)
     tokenizer.add_token('BRANCH_ALTERNATIVE', r'else if|\b(?<!#)else\b|\bcase\b|\bdefault\b', handler_generic)
+    tokenizer.add_token('EXPRESSION_END', r';', handler_generic)
     tokenizer.add_token('SCOPE_START', r'{', handler_generic)
     tokenizer.add_token('NEWLINE', r'\n', handler_newline)
     tokenizer.add_token('SCOPE_END', r'}', handler_generic)
