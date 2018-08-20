@@ -26,8 +26,11 @@ int main() { // Function start
 
                 if (true)
                     foo();
-                else
+                else if (true)
                     bar();
+                else
+                    baz();
+
 
                 if (y == false) { // Nested branch
                     // Do something
