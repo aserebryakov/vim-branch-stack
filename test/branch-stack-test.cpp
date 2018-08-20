@@ -31,7 +31,6 @@ int main() { // Function start
                 else
                     baz();
 
-
                 if (y == false) { // Nested branch
                     // Do something
                 }
