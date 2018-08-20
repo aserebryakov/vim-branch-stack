@@ -3,69 +3,108 @@ from simplex import Tokenizer
 from simplex import Token
 
 
-# States
-# INIT
-# NOT_BRANCH_SCOPE
-# BRANCH_START
-# IN_BRANCH_SCOPE
-# ALTERNATIVE_BRANCH
-# IN_ALTERNATIVE_BRANCH_SCOPE
-# SCOPE_END
+# @startuml
+#
+# title Token Processor
+#
+# [*] --> BRANCH_START : BRANCH_START
+# BRANCH_START --> INSIDE_BRANCH_SCOPE : SCOPE_START
+# INSIDE_BRANCH_SCOPE --> SCOPE_END : SCOPE_END
+# SCOPE_END --> ALTERNATIVE_BRANCH_START : ALTERNATIVE_BRANCH
+# SCOPE_END --> BRANCH_START : BRANCH_START
+# ALTERNATIVE_BRANCH_START --> INSIDE_BRANCH_SCOPE : SCOPE_START
+# BRANCH_START --> INSIDE_BRACES : BRACE_OPEN
+# INSIDE_BRACES --> BRACES_END : BRACE_CLOSE
+# BRACES_END --> EXPRESSION_END : EXPRESSION_END
+# BRACES_END --> BRANCH_START : BRANCH_START
+# BRACES_END --> ALTERNATIVE_BRANCH_START : ALTERNATIVE_BRANCH
+# EXPRESSION_END --> BRANCH_START : BRANCH_START
+# EXPRESSION_END --> ALTERNATIVE_BRANCH_START : ALTERNATIVE_BRANCH
+# @enduml
 
-class TokenProcessor:
-    def __init__(self):
-       self.stack = []
-       self.state = 'INIT'
+
+class State():
+    def __init__(self, token_stack):
+       self.stack = token_stack
+       print(self.__class__)
+
+       if len(self.stack) > 0:
+           print(self.stack[-1])
 
     def handle_token(self, token):
-        print("append {} state {}".format(token, self.state))
-
-        if token.kind == 'BRANCH_START':
-            self.handle_branch_start()
-        elif token.kind == 'BRANCH_ALTERNATIVE':
-            self.handle_branch_alternative()
-        elif token.kind == 'SCOPE_START':
-            self.handle_scope_start()
-        elif token.kind == 'SCOPE_END':
-            self.handle_scope_end()
-
         self.stack.append(token)
 
-    def handle_branch_start(self):
-        previous_state = self.state
-        self.state = 'BRANCH_START'
 
-        if previous_state != 'SCOPE_END':
-            return
+class Init(State):
+    def __init__(self):
+        super().__init__([])
 
-        while len(self.stack) > 0 and self.stack[-1].kind != 'BRANCH_START':
+    def handle_token(self, token):
+        if token.kind == 'BRANCH_START':
+            super().handle_token(token)
+            return BranchStart(self.stack)
+
+        return self
+
+
+class BranchStart(State):
+    def __init__(self, token_stack):
+        super().__init__(token_stack)
+
+    def handle_token(self, token):
+        if token.kind == 'SCOPE_START':
+            super().handle_token(token)
+            return InsideBranchScope(self.stack)
+
+        return self
+
+
+class InsideBranchScope(State):
+    def __init__(self, token_stack):
+        super().__init__(token_stack)
+
+    def handle_token(self, token):
+        if token.kind == 'SCOPE_END':
+            super().handle_token(token)
+            return ScopeEnd(self.stack)
+        elif token.kind == 'BRANCH_START':
+            super().handle_token(token)
+            return BranchStart(self.stack)
+
+        return self
+
+
+class ScopeEnd(State):
+    def __init__(self, token_stack):
+        super().__init__(token_stack)
+
+    def unroll_stack(self, token, next_state):
+        while len(self.stack) > 1 and self.stack[-1].kind != 'BRANCH_START' and self.stack[-1].kind != 'BRANCH_ALTERNATIVE':
             self.stack.pop()
+        self.stack.pop() # removes the starting branch token
+        super().handle_token(token)
+        return next_state(self.stack)
 
-        # Removes the BRANCH_START when scope is ended
-        if len(self.stack) > 0:
-            self.stack.pop()
+
+    def handle_token(self, token):
+        if token.kind == 'BRANCH_START':
+            return self.unroll_stack(token, BranchStart)
+        elif token.kind == 'BRANCH_ALTERNATIVE':
+            return self.unroll_stack(token, AlternativeBranchStart)
+
+        return self
 
 
-    def handle_branch_alternative(self):
-        previous_state = self.state
-        self.state = 'ALTERNATIVE_BRANCH'
+class AlternativeBranchStart(State):
+    def __init__(self, token_stack):
+        super().__init__(token_stack)
 
-        if previous_state != 'SCOPE_END':
-            return
+    def handle_token(self, token):
+        if token.kind == 'SCOPE_START':
+            super().handle_token(token)
+            return InsideBranchScope(self.stack)
 
-        while len(self.stack) > 0 and self.stack[-1].kind != 'BRANCH_START' and self.stack[-1].kind != 'ALTERNATIVE_BRANCH':
-            self.stack.pop()
-
-    def handle_scope_start(self):
-        if self.state == 'INIT':
-            self.state = 'NOT_BRANCH_SCOPE'
-        elif self.state == 'BRANCH_START':
-            self.state = 'IN_BRANCH_SCOPE'
-        elif self.state == 'ALTERNATIVE_BRANCH':
-            self.state = 'IN_ALTERNATIVE_BRANCH_SCOPE'
-
-    def handle_scope_end(self):
-        self.state = 'SCOPE_END'
+        return self
 
 
 def handler_generic(match_object, kind, value, keywords, state):
@@ -113,12 +152,10 @@ def core_main():
 
 
 def estimate_stack(tokens):
-    processor = TokenProcessor()
+    processor = Init()
 
     for token in tokens:
-        processor.handle_token(token)
-
-    print(processor.stack)
+        processor = processor.handle_token(token)
 
     vim.command('set errorformat=%f:%l:%m')
 
