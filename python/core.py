@@ -98,8 +98,8 @@ def core_main():
         'line_start' : 0
     })
 
-    tokenizer.add_token('BRANCH_START', r'\bif\b|\bswitch\b', handler_generic)
-    tokenizer.add_token('BRANCH_ALTERNATIVE', r'else if|\belse\b|\bcase\b|\bdefault\b', handler_generic)
+    tokenizer.add_token('BRANCH_START', r'\b(?<!#)if\b|\bswitch\b|\bfor\b|\bwhile\b', handler_generic)
+    tokenizer.add_token('BRANCH_ALTERNATIVE', r'else if|\b(?<!#)else\b|\bcase\b|\bdefault\b', handler_generic)
     tokenizer.add_token('SCOPE_START', r'{', handler_generic)
     tokenizer.add_token('NEWLINE', r'\n', handler_newline)
     tokenizer.add_token('SCOPE_END', r'}', handler_generic)
@@ -108,12 +108,10 @@ def core_main():
     data = '\n'.join(vim.current.buffer[startline - 1 : endline - 1])
     estimate_stack(tokenizer.tokenize(data))
 
+    vim.command("normal 'z")
+    vim.command("lopen")
 
-# Branch Start -> Scope Start -> Branch Start
-# Branch Start -> Scope Start -> Scope End -> Alternative Branch
-#                                                     ^
-#                                                     |
-#                                         Decision to remove tokens is here
+
 def estimate_stack(tokens):
     processor = TokenProcessor()
 
@@ -123,9 +121,10 @@ def estimate_stack(tokens):
     print(processor.stack)
 
     vim.command('set errorformat=%f:%l:%m')
-    vim.command('lexpr [' +
-        ','.join(["'{}:{}:{}'".format(vim.current.buffer.name, token.line, vim.current.buffer[token.line - 1])
-        for token in processor.stack
-        if token.kind != 'SCOPE_START']) +
-        ']')
+
+    filtered_stack = (token for token in processor.stack if token.kind != 'SCOPE_START')
+
+    for depth, token in enumerate(filtered_stack):
+        vim.command("ladd '{}:{}:{} {}'".format(
+            vim.current.buffer.name, token.line, ('+' * depth), (vim.current.buffer[token.line - 1].strip())))
 
