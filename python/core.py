@@ -36,11 +36,11 @@ class State():
 
 
 class Init(State):
-    def __init__(self):
-        super().__init__([])
+    def __init__(self, token_stack=[]):
+        super().__init__(token_stack)
 
     def handle_token(self, token):
-        if token.kind == 'BRANCH_START':
+        if token.kind == 'BRANCH_START' or token.kind == 'BRANCH_ALTERNATIVE':
             super().handle_token(token)
             return BranchStart(self.stack)
 
@@ -52,7 +52,10 @@ class BranchStart(State):
         super().__init__(token_stack)
 
     def handle_token(self, token):
-        if token.kind == 'SCOPE_START':
+        if token.kind == 'BRACE_OPEN':
+            super().handle_token(token)
+            return InsideBraces(self.stack)
+        elif token.kind == 'SCOPE_START':
             super().handle_token(token)
             return InsideBranchScope(self.stack)
 
@@ -67,7 +70,7 @@ class InsideBranchScope(State):
         if token.kind == 'SCOPE_END':
             super().handle_token(token)
             return ScopeEnd(self.stack)
-        elif token.kind == 'BRANCH_START':
+        elif token.kind == 'BRANCH_START' or token.kind == 'BRANCH_ALTERNATIVE':
             super().handle_token(token)
             return BranchStart(self.stack)
 
@@ -100,7 +103,43 @@ class AlternativeBranchStart(State):
         super().__init__(token_stack)
 
     def handle_token(self, token):
-        if token.kind == 'SCOPE_START':
+        if token.kind == 'BRACE_OPEN':
+            super().handle_token(token)
+            return InsideBraces(self.stack)
+        elif token.kind == 'SCOPE_START':
+            super().handle_token(token)
+            return InsideBranchScope(self.stack)
+
+        return self
+
+
+class InsideBraces(State):
+    def __init__(self, token_stack):
+        super().__init__(token_stack)
+
+    def handle_token(self, token):
+        if token.kind == 'BRACE_OPEN':
+            super().handle_token(token)
+        elif token.kind == 'BRACE_CLOSE':
+            if len(self.stack) > 0:
+                self.stack.pop()
+        elif token.kind == 'EXPRESSION_END':
+            if len(self.stack) > 0 and self.stack[-1].kind != 'BRACE_OPEN':
+                self.stack.pop()
+                return Init(self.stack)
+        elif token.kind == 'SCOPE_START':
+            super().handle_token(token)
+            return InsideBranchScope(self.stack)
+
+        return self
+
+
+class ExpressionEnd(State):
+    def __init__(self, token_stack):
+        super().__init__(token_stack)
+
+    def handle_token(self, token):
+        if token.kind == 'BRACE_CLOSE':
             super().handle_token(token)
             return InsideBranchScope(self.stack)
 
@@ -142,6 +181,9 @@ def core_main():
     tokenizer.add_token('SCOPE_START', r'{', handler_generic)
     tokenizer.add_token('NEWLINE', r'\n', handler_newline)
     tokenizer.add_token('SCOPE_END', r'}', handler_generic)
+    tokenizer.add_token('BRACE_OPEN', r'\(', handler_generic)
+    tokenizer.add_token('BRACE_CLOSE', r'\)', handler_generic)
+    tokenizer.add_token('EXPRESSION_END', r';', handler_generic)
     tokenizer.add_token('MISMATCH', r'.', handler_skip)
 
     data = '\n'.join(vim.current.buffer[startline - 1 : endline - 1])
@@ -152,7 +194,7 @@ def core_main():
 
 
 def estimate_stack(tokens):
-    processor = Init()
+    processor = Init([])
 
     for token in tokens:
         processor = processor.handle_token(token)
