@@ -12,7 +12,8 @@ int main() { // Function start
     {
         for (int i = 0; i < 42; i++)
         {
-            if (true)
+            if (true ||
+                false)
             {
                 // Do something
             }

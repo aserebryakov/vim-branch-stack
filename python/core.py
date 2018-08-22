@@ -198,5 +198,8 @@ def estimate_stack(tokens):
 
     for depth, token in enumerate(filtered_stack):
         vim.command("ladd '{}:{}:{} {}'".format(
-            vim.current.buffer.name, token.line, ('+' * depth), (vim.current.buffer[token.line - 1].strip())))
+            vim.current.buffer.name,
+            token.line,
+            ('+' * depth),
+            (vim.current.buffer[token.line - 1].strip().replace('|','\|'))))
 
