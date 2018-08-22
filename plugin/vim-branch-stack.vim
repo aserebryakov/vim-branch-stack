@@ -21,8 +21,13 @@
 " IN THE SOFTWARE.
 
 
-" TODO: Document
+" Parses the code and shows the branching stack in location window
 function! VimBranchStackFind()
+  if !has('python3')
+    echoerr 'Vim must be compiled with python3 support to use this plugin'
+    return
+  endif
+
 python3 << EOF
 
 import sys, os
@@ -32,7 +37,6 @@ script_folder = vim.eval('s:script_folder_path')
 # TODO: Handle the adding the same path multiple times on pack-add
 sys.path.insert(0, os.path.join(script_folder, '..', 'python'))
 sys.path.insert(0, os.path.join(script_folder, '..', 'python', 'simplex'))
-print(sys.path)
 
 import core
 
