@@ -3,26 +3,6 @@ from simplex import Tokenizer
 from simplex import Token
 
 
-# @startuml
-#
-# title Token Processor
-#
-# [*] --> BRANCH_START : BRANCH_START
-# BRANCH_START --> INSIDE_BRANCH_SCOPE : SCOPE_START
-# INSIDE_BRANCH_SCOPE --> SCOPE_END : SCOPE_END
-# SCOPE_END --> ALTERNATIVE_BRANCH_START : ALTERNATIVE_BRANCH
-# SCOPE_END --> BRANCH_START : BRANCH_START
-# ALTERNATIVE_BRANCH_START --> INSIDE_BRANCH_SCOPE : SCOPE_START
-# BRANCH_START --> INSIDE_BRACES : BRACE_OPEN
-# INSIDE_BRACES --> BRACES_END : BRACE_CLOSE
-# BRACES_END --> EXPRESSION_END : EXPRESSION_END
-# BRACES_END --> BRANCH_START : BRANCH_START
-# BRACES_END --> ALTERNATIVE_BRANCH_START : ALTERNATIVE_BRANCH
-# EXPRESSION_END --> BRANCH_START : BRANCH_START
-# EXPRESSION_END --> ALTERNATIVE_BRANCH_START : ALTERNATIVE_BRANCH
-# @enduml
-
-
 class State():
     def __init__(self, token_stack):
        self.stack = token_stack
@@ -40,9 +20,12 @@ class Init(State):
         super().__init__(token_stack)
 
     def handle_token(self, token):
-        if token.kind == 'BRANCH_START' or token.kind == 'BRANCH_ALTERNATIVE':
+        if token.kind == 'BRANCH_START':
             super().handle_token(token)
             return BranchStart(self.stack)
+        elif token.kind == 'BRANCH_ALTERNATIVE':
+            super().handle_token(token)
+            return AlternativeBranchStart(self.stack)
 
         return self
 
@@ -94,6 +77,8 @@ class ScopeEnd(State):
             return self.unroll_stack(token, BranchStart)
         elif token.kind == 'BRANCH_ALTERNATIVE':
             return self.unroll_stack(token, AlternativeBranchStart)
+        elif token.kind == 'SCOPE_END':
+            return self.unroll_stack(token, ScopeEnd)
 
         return self
 
@@ -128,8 +113,9 @@ class InsideBraces(State):
                 self.stack.pop()
                 return Init(self.stack)
         elif token.kind == 'SCOPE_START':
-            super().handle_token(token)
-            return InsideBranchScope(self.stack)
+            if len(self.stack) > 0 and self.stack[-1].kind != 'BRACE_OPEN':
+                super().handle_token(token)
+                return InsideBranchScope(self.stack)
 
         return self
 
