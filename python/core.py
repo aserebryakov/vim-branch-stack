@@ -94,6 +94,10 @@ class AlternativeBranchStart(State):
         elif token.kind == 'SCOPE_START':
             super().handle_token(token)
             return InsideBranchScope(self.stack)
+        elif token.kind == 'EXPRESSION_END':
+            if len(self.stack) > 0 and self.stack[-1].kind == 'BRANCH_ALTERNATIVE':
+                self.stack.pop()
+                return Init(self.stack)
 
         return self
 

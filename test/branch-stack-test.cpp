@@ -29,7 +29,7 @@ int main() { // Function start
                 else if (true)
                     bar();
                 else
-                    baz();
+                    test = baz;
 
                 if (y == false) { // Nested branch
                     // Do something
