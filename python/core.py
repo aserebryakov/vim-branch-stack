@@ -56,9 +56,12 @@ class InsideBranchScope(State):
         if token.kind == 'SCOPE_END':
             super().handle_token(token)
             return ScopeEnd(self.stack)
-        elif token.kind == 'BRANCH_START' or token.kind == 'BRANCH_ALTERNATIVE':
+        elif token.kind == 'BRANCH_START':
             super().handle_token(token)
             return BranchStart(self.stack)
+        elif token.kind == 'BRANCH_ALTERNATIVE':
+            super().handle_token(token)
+            return AlternativeBranchStart(self.stack)
 
         return self
 
@@ -168,8 +171,8 @@ def core_main():
         'line_start' : 0
     })
 
-    tokenizer.add_token('BRANCH_START', r'\b(?<!#)if\b|\bswitch\b|\bfor\b|\bwhile\b', handler_generic)
-    tokenizer.add_token('BRANCH_ALTERNATIVE', r'else if|\b(?<!#)else\b|\bcase\b|\bdefault\b', handler_generic)
+    tokenizer.add_token('BRANCH_START', r'\b(?<!#)if\b|\bswitch\b|\bfor\b|\bwhile\b|\btry\b', handler_generic)
+    tokenizer.add_token('BRANCH_ALTERNATIVE', r'else if|\b(?<!#)else\b|\bcase\b|\bdefault\b|\bcatch\b', handler_generic)
     tokenizer.add_token('SCOPE_START', r'{', handler_generic)
     tokenizer.add_token('NEWLINE', r'\n', handler_newline)
     tokenizer.add_token('SCOPE_END', r'}', handler_generic)

@@ -12,6 +12,18 @@ int main() { // Function start
                 x = 400;
             x = 500;
         }
+        else {
+            // Awesomely elsed
+        }
+
+        try {
+            // Throw exception
+        }
+        catch (...)
+        {
+            // Awesomely catched
+        }
+        x = 500;
     }
 #else
 #endif
@@ -27,10 +39,23 @@ int main() { // Function start
             }
             else if (x == true || y != '0') // Alternative branch
             {
-                if (true)
-                    x = 42;
-                else
-                    x = 400;
+                try {
+                    if (true)
+                        x = 42;
+                    else
+                        x = 400;
+                }
+                catch (Exception e)
+                {
+                    if (true)
+                        x = 42;
+                    else
+                        x = 400;
+                }
+                catch (...)
+                {
+                    // Awesomely catched
+                }
                 x = 500;
             }
             else if (x == true) // Another alternative branch
