@@ -22,7 +22,7 @@
 
 
 " Parses the code and shows the branching stack in location window
-function! VimBranchStackFind()
+function! VimBranchStack()
   if !has('python3')
     echoerr 'Vim must be compiled with python3 support to use this plugin'
     return
@@ -51,6 +51,6 @@ if !exists('g:vimbranchstack_plugin')
   let g:vimbranchstack_plugin = 1
   let s:script_folder_path = escape(expand('<sfile>:p:h'),'\')
 
-  command! BranchStack silent call VimBranchStackFind()
+  command! BranchStack silent call VimBranchStack()
 endif
 
