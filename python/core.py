@@ -26,6 +26,9 @@ class Init(State):
         elif token.kind == 'BRANCH_ALTERNATIVE':
             super().handle_token(token)
             return AlternativeBranchStart(self.stack)
+        elif token.kind == 'SCOPE_START':
+            super().handle_token(token)
+            return InsideBranchScope(self.stack)
 
         return self
 
@@ -97,7 +100,7 @@ class AlternativeBranchStart(State):
         elif token.kind == 'EXPRESSION_END':
             if len(self.stack) > 0 and self.stack[-1].kind == 'BRANCH_ALTERNATIVE':
                 self.stack.pop()
-                return Init(self.stack)
+                return Init(self.stack).handle_token(self.stack[-1])
 
         return self
 

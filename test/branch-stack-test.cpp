@@ -4,7 +4,14 @@ int main() { // Function start
 #if 1
     if (true) // New branch
     {
-        // Do something
+        if (false) {
+            // Do something
+            if (true)
+                x = 42;
+            else
+                x = 400;
+            x = 500;
+        }
     }
 #else
 #endif
@@ -20,7 +27,11 @@ int main() { // Function start
             }
             else if (x == true || y != '0') // Alternative branch
             {
-                // Snip
+                if (true)
+                    x = 42;
+                else
+                    x = 400;
+                x = 500;
             }
             else if (x == true) // Another alternative branch
             {
@@ -45,6 +56,9 @@ int main() { // Function start
                             break;
                         }
                         case 2:
+                            break;
+                        case 3:
+                        default:
                         {
                             break;
                         }
