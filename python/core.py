@@ -149,7 +149,6 @@ def handler_newline(match_object, kind, value, keywords, state):
     state['line_start'] = match_object.end()
     state['line_num'] += 1
 
-
 def get_data_range():
     vim.command('normal mz')
     endline = int(vim.eval('line(".")'))
@@ -187,7 +186,8 @@ def estimate_stack(tokens):
     processor = Init([])
 
     for token in tokens:
-        processor = processor.handle_token(token)
+        if not '#define' in vim.current.buffer[token.line - 1]:
+            processor = processor.handle_token(token)
 
     vim.command('set errorformat=%f:%l:%m')
 

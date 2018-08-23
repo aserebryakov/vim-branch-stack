@@ -10,9 +10,10 @@ int main() { // Function start
 #endif
     while (true)
     {
+#define INFINITE_LOOP while(true) {
         for (int i = 0; i < 42; i++)
         {
-            if (true ||
+            if (true || "test" ||
                 false)
             {
                 // Do something
