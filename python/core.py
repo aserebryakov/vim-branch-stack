@@ -182,11 +182,23 @@ def core_main():
     vim.command("lopen")
 
 
+def prepare_line_of_code(line):
+    line = line.strip()
+    line = line.replace('|', '\|') # Causes error in ladd command if not handles
+    line = line.replace("'", '"') # Causes error in ladd command if not handles
+    return line
+
+
+def token_should_be_processed(token):
+    # define strings aren't part of the code but may contain
+    return (not '#define' in vim.current.buffer[token.line - 1])
+
+
 def estimate_stack(tokens):
     processor = Init([])
 
     for token in tokens:
-        if not '#define' in vim.current.buffer[token.line - 1]:
+        if token_should_be_processed(token):
             processor = processor.handle_token(token)
 
     vim.command('set errorformat=%f:%l:%m')
@@ -201,5 +213,5 @@ def estimate_stack(tokens):
             vim.current.buffer.name,
             token.line,
             ('+' * depth),
-            (vim.current.buffer[token.line - 1].strip().replace('|','\|'))))
+            prepare_line_of_code(vim.current.buffer[token.line - 1])))
 

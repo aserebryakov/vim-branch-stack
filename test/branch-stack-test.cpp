@@ -18,7 +18,7 @@ int main() { // Function start
             {
                 // Do something
             }
-            else if (x == true) // Alternative branch
+            else if (x == true || y != '0') // Alternative branch
             {
                 // Snip
             }
