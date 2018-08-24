@@ -9,16 +9,17 @@ CONTENTS                                                        *VimBranchStack*
 1. Introduction .... |VimBranchStackIntroduction|
 2. Installation .... |VimBranchStackInstallation|
 3. Usage ........... |VimBranchStackUsage|
-4. Contribution .... |VimBranchStackContribution|
-5. License ......... |VimBranchStackLicense|
-6. Changelog ....... |VimBranchStackChangelog|
-7. Credits ......... |VimBranchStackCredits|
+4. Limitations ..... |VimBranchStackLimitations|
+5. Contribution .... |VimBranchStackContribution|
+6. License ......... |VimBranchStackLicense|
+7. Changelog ....... |VimBranchStackChangelog|
+8. Credits ......... |VimBranchStackCredits|
 
 ==============================================================================
 1. Introduction                                     *VimBranchStackIntroduction*
 
-vim-branch-stack plugin is intended to help with working on legacy code where
-functions are long and has many nested branches (if-else, switch-case,
+vim-branch-stack plugin is intended to help working on legacy C/C++ code where
+functions are long and have many nested branches (if-else, switch-case,
 try-catch, while, for).
 
 ==============================================================================
@@ -30,12 +31,13 @@ Requirements:
 Vim 8+:
 
 $ cd ~/.vim/pack/directory_name/start/
-$ git clone https://github.com/aserebryakov/vim-branch-stack.git
+$ git clone --recurse-submodules https://github.com/aserebryakov/vim-branch-stack.git
+
 
 Pathogen:
 
 $ cd ~/.vim/bundle
-$ git clone https://github.com/aserebryakov/vim-branch-stack.git
+$ git clone --recurse-submodules https://github.com/aserebryakov/vim-branch-stack.git
 
 NeoBundle:
 
@@ -77,18 +79,29 @@ main.cpp
 
 Location window
 ---------------
+
   1 main.cpp |6| if (meaning) 
   2 main.cpp |12| + else
 
 ==============================================================================
-4. Contribution                                     *VimBranchStackContribution*
+4. Limitations                                       *VimBranchStackLimitations*
+
+The plugin has the following limitations:
+
+  * Commented out code is not supported
+  * `goto` is not supported
+  * `do-while` is not supported
+  * Preprocessing is not supported
+
+==============================================================================
+5. Contribution                                     *VimBranchStackContribution*
 
 Source code and issues are hosted on GitHub:
 
 https://github.com/aserebryakov/vim-branch-stack
 
 ==============================================================================
-5. License                                               *VimBranchStackLicense*
+6. License                                               *VimBranchStackLicense*
 
 MIT License
 
@@ -113,14 +126,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-6. Changelog                                           *VimBranchStackChangelog*
+7. Changelog                                           *VimBranchStackChangelog*
 
 0.1.0
 
 * Initial version
 
 ==============================================================================
-7. Credits                                               *VimBranchStackCredits*
+8. Credits                                               *VimBranchStackCredits*
 
 * Alexander Serebryakov (author)  https://github.com/aserebryakov
 
