@@ -32,6 +32,9 @@ int main() { // Function start
 #define INFINITE_LOOP while(true) {
         for (int i = 0; i < 42; i++)
         {
+            // Checking if this comment affects the parsing
+            // for while, switch, try, else if, case, default, catch
+
             if (true || "test" ||
                 false)
             {
