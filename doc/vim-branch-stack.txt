@@ -88,7 +88,7 @@ Location window
 
 The plugin has the following limitations:
 
-  * Commented out code is not supported
+  * Commented out code with `/* block comments */` brakes parsing
   * `goto` is not supported
   * `do-while` is not supported
   * Preprocessing is not supported
@@ -131,6 +131,10 @@ SOFTWARE.
 0.1.0
 
 * Initial version
+
+0.1.1
+
+* Fixed handling of single line comments
 
 ==============================================================================
 8. Credits                                               *VimBranchStackCredits*
