@@ -196,8 +196,13 @@ def prepare_line_of_code(line):
 
 
 def token_should_be_processed(token):
-    # define strings aren't part of the code but may contain
-    return (not '#define' in vim.current.buffer[token.line - 1])
+    line = vim.current.buffer[token.line - 1]
+    comment_start = line.find('//')
+    if (comment_start != -1 and token.column > comment_start):
+        return False
+
+    # define strings aren't part of the code but may contain tokens
+    return (not '#define' in line)
 
 
 def estimate_stack(tokens):

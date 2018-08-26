@@ -10,7 +10,6 @@ Introduction
 functions are long and have many nested branches (`if-else`, `switch-case`,
 `try-catch`, `while`, `for`).
 
-
 Installation
 ------------
 
@@ -87,7 +86,7 @@ Limitations
 
 The plugin has the following limitations:
 
-  * Commented out code is not supported
+  * Commented out code with `/* block comments */` brakes parsing
   * `goto` is not supported
   * `do-while` is not supported
   * Preprocessing is not supported
@@ -115,6 +114,10 @@ Changelog
 
 * Initial version
 
+
+#### 0.1.1
+
+* Fixed handling of single line comments
 
 Credits
 -------
