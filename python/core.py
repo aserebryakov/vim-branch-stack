@@ -1,6 +1,5 @@
 import vim
-from simplex import Tokenizer
-from simplex import Token
+from simplex import Tokenizer, Token
 
 
 class State():
@@ -20,7 +19,7 @@ class Init(State):
         super().__init__(token_stack)
 
     def handle_token(self, token):
-        if token.kind == 'BRANCH_START' or token.kind == 'BRANCH_ALTERNATIVE':
+        if token.kind == 'BRANCH_START':
             super().handle_token(token)
             return BranchStart(self.stack)
         elif token.kind == 'SCOPE_START':
@@ -42,7 +41,7 @@ class BranchStart(State):
             super().handle_token(token)
             return InsideBranchScope(self.stack)
         elif token.kind == 'EXPRESSION_END':
-            if len(self.stack) > 0 and (self.stack[-1].kind == 'BRANCH_ALTERNATIVE' or self.stack[-1].kind == 'BRANCH_START'):
+            if len(self.stack) > 0 and self.stack[-1].kind == 'BRANCH_START':
                 self.stack.pop()
                 return Init(self.stack).handle_token(self.stack[-1])
 
@@ -57,7 +56,7 @@ class InsideBranchScope(State):
         if token.kind == 'SCOPE_END':
             super().handle_token(token)
             return ScopeEnd(self.stack)
-        elif token.kind == 'BRANCH_START' or token.kind == 'BRANCH_ALTERNATIVE':
+        elif token.kind == 'BRANCH_START':
             super().handle_token(token)
             return BranchStart(self.stack)
 
@@ -69,7 +68,7 @@ class ScopeEnd(State):
         super().__init__(token_stack)
 
     def unroll_stack(self, token, next_state):
-        while len(self.stack) > 1 and self.stack[-1].kind != 'BRANCH_START' and self.stack[-1].kind != 'BRANCH_ALTERNATIVE':
+        while len(self.stack) > 1 and self.stack[-1].kind != 'BRANCH_START':
             self.stack.pop()
         self.stack.pop() # removes the starting branch token
         super().handle_token(token)
@@ -77,7 +76,7 @@ class ScopeEnd(State):
 
 
     def handle_token(self, token):
-        if token.kind == 'BRANCH_START' or token.kind == 'BRANCH_ALTERNATIVE':
+        if token.kind == 'BRANCH_START':
             return self.unroll_stack(token, BranchStart)
         elif token.kind == 'SCOPE_END':
             return self.unroll_stack(token, ScopeEnd)
@@ -148,8 +147,9 @@ def core_main():
         'line_start' : 0
     })
 
-    tokenizer.add_token('BRANCH_START', r'\b(?<!#)if\b|\bswitch\b|\bfor\b|\bwhile\b|\btry\b', handler_generic)
-    tokenizer.add_token('BRANCH_ALTERNATIVE', r'else if|\b(?<!#)else\b|\bcase\b|\bdefault\b|\bcatch\b', handler_generic)
+    tokenizer.add_token('BRANCH_START', r'\b(?<!#)if\b|\bswitch\b|\bfor\b|'
+                                        r'\bwhile\b|\btry\b|else if|\b(?<!#)else\b|'
+                                        r'\bcase\b|\bdefault\b|\bcatch\b', handler_generic)
     tokenizer.add_token('SCOPE_START', r'{', handler_generic)
     tokenizer.add_token('NEWLINE', r'\n', handler_newline)
     tokenizer.add_token('SCOPE_END', r'}', handler_generic)
