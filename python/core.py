@@ -20,12 +20,9 @@ class Init(State):
         super().__init__(token_stack)
 
     def handle_token(self, token):
-        if token.kind == 'BRANCH_START':
+        if token.kind == 'BRANCH_START' or token.kind == 'BRANCH_ALTERNATIVE':
             super().handle_token(token)
             return BranchStart(self.stack)
-        elif token.kind == 'BRANCH_ALTERNATIVE':
-            super().handle_token(token)
-            return AlternativeBranchStart(self.stack)
         elif token.kind == 'SCOPE_START':
             super().handle_token(token)
             return InsideBranchScope(self.stack)
@@ -44,6 +41,10 @@ class BranchStart(State):
         elif token.kind == 'SCOPE_START':
             super().handle_token(token)
             return InsideBranchScope(self.stack)
+        elif token.kind == 'EXPRESSION_END':
+            if len(self.stack) > 0 and (self.stack[-1].kind == 'BRANCH_ALTERNATIVE' or self.stack[-1].kind == 'BRANCH_START'):
+                self.stack.pop()
+                return Init(self.stack).handle_token(self.stack[-1])
 
         return self
 
@@ -56,12 +57,9 @@ class InsideBranchScope(State):
         if token.kind == 'SCOPE_END':
             super().handle_token(token)
             return ScopeEnd(self.stack)
-        elif token.kind == 'BRANCH_START':
+        elif token.kind == 'BRANCH_START' or token.kind == 'BRANCH_ALTERNATIVE':
             super().handle_token(token)
             return BranchStart(self.stack)
-        elif token.kind == 'BRANCH_ALTERNATIVE':
-            super().handle_token(token)
-            return AlternativeBranchStart(self.stack)
 
         return self
 
@@ -79,31 +77,10 @@ class ScopeEnd(State):
 
 
     def handle_token(self, token):
-        if token.kind == 'BRANCH_START':
+        if token.kind == 'BRANCH_START' or token.kind == 'BRANCH_ALTERNATIVE':
             return self.unroll_stack(token, BranchStart)
-        elif token.kind == 'BRANCH_ALTERNATIVE':
-            return self.unroll_stack(token, AlternativeBranchStart)
         elif token.kind == 'SCOPE_END':
             return self.unroll_stack(token, ScopeEnd)
-
-        return self
-
-
-class AlternativeBranchStart(State):
-    def __init__(self, token_stack):
-        super().__init__(token_stack)
-
-    def handle_token(self, token):
-        if token.kind == 'BRACE_OPEN':
-            super().handle_token(token)
-            return InsideBraces(self.stack)
-        elif token.kind == 'SCOPE_START':
-            super().handle_token(token)
-            return InsideBranchScope(self.stack)
-        elif token.kind == 'EXPRESSION_END':
-            if len(self.stack) > 0 and self.stack[-1].kind == 'BRANCH_ALTERNATIVE':
-                self.stack.pop()
-                return Init(self.stack).handle_token(self.stack[-1])
 
         return self
 
