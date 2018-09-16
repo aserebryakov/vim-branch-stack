@@ -3,20 +3,21 @@ from simplex import Tokenizer, Token
 
 
 class State():
-    def __init__(self, token_stack):
-       self.stack = token_stack
-       print(self.__class__)
+    def __init__(self, token_stack, previous_state):
+        self.previous_state = previous_state
+        self.stack = token_stack
+        print(self.__class__)
 
-       if len(self.stack) > 0:
-           print(self.stack[-1])
+        if len(self.stack) > 0:
+            print(self.stack[-1])
 
     def handle_token(self, token):
         self.stack.append(token)
 
 
 class Init(State):
-    def __init__(self, token_stack=[]):
-        super().__init__(token_stack)
+    def __init__(self, token_stack=[], previous_state=None):
+        super().__init__(token_stack, previous_state)
 
     def handle_token(self, token):
         if token.kind == 'BRANCH_START':
@@ -30,13 +31,13 @@ class Init(State):
 
 
 class BranchStart(State):
-    def __init__(self, token_stack):
-        super().__init__(token_stack)
+    def __init__(self, token_stack, previous_state=None):
+        super().__init__(token_stack, previous_state)
 
     def handle_token(self, token):
         if token.kind == 'BRACE_OPEN':
             super().handle_token(token)
-            return InsideBraces(self.stack)
+            return InsideBraces(self.stack, self)
         elif token.kind == 'SCOPE_START':
             super().handle_token(token)
             return InsideBranchScope(self.stack)
@@ -49,8 +50,8 @@ class BranchStart(State):
 
 
 class InsideBranchScope(State):
-    def __init__(self, token_stack):
-        super().__init__(token_stack)
+    def __init__(self, token_stack, previous_state=None):
+        super().__init__(token_stack, previous_state)
 
     def handle_token(self, token):
         if token.kind == 'SCOPE_END':
@@ -64,8 +65,8 @@ class InsideBranchScope(State):
 
 
 class ScopeEnd(State):
-    def __init__(self, token_stack):
-        super().__init__(token_stack)
+    def __init__(self, token_stack, previous_state=None):
+        super().__init__(token_stack, previous_state)
 
     def unroll_stack(self, token, next_state):
         while len(self.stack) > 1 and self.stack[-1].kind != 'BRANCH_START':
@@ -85,30 +86,24 @@ class ScopeEnd(State):
 
 
 class InsideBraces(State):
-    def __init__(self, token_stack):
-        super().__init__(token_stack)
+    def __init__(self, token_stack, previous_state):
+        super().__init__(token_stack, previous_state)
 
     def handle_token(self, token):
         if token.kind == 'BRACE_OPEN':
             super().handle_token(token)
+            return InsideBraces(self.stack, self)
         elif token.kind == 'BRACE_CLOSE':
             if len(self.stack) > 0:
                 self.stack.pop()
-        elif token.kind == 'EXPRESSION_END':
-            if len(self.stack) > 0 and self.stack[-1].kind != 'BRACE_OPEN':
-                self.stack.pop()
-                return Init(self.stack)
-        elif token.kind == 'SCOPE_START':
-            if len(self.stack) > 0 and self.stack[-1].kind != 'BRACE_OPEN':
-                super().handle_token(token)
-                return InsideBranchScope(self.stack)
+            return self.previous_state
 
         return self
 
 
 class ExpressionEnd(State):
-    def __init__(self, token_stack):
-        super().__init__(token_stack)
+    def __init__(self, token_stack, previous_state=None):
+        super().__init__(token_stack, previous_state)
 
     def handle_token(self, token):
         if token.kind == 'BRACE_CLOSE':

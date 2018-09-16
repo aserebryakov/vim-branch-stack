@@ -27,7 +27,7 @@ int main() { // Function start
     }
 #else
 #endif
-    while (true)
+    while ((true))
     {
 #define INFINITE_LOOP while(true) {
         for (int i = 0; i < 42; i++)
