@@ -30,7 +30,14 @@ int main() { // Function start
     while ((true))
     {
 #define INFINITE_LOOP while(true) {
-        for (int i = 0; i < 42; i++)
+        // for (int i = 0; i < 42; i++) // Commented out branch
+        /*
+         * for (int i = 0; i < 42; i++) // Commented out branch 2
+         */
+        /*
+         * for (int i = 0; i < 42; i++) // Commented out branch 3
+        //  */
+        for (int i = 0; i < 42; i++ /* do if anyway */)
         {
             // Checking if this comment affects the parsing
             // for while, switch, try, else if, case, default, catch

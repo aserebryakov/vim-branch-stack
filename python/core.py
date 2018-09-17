@@ -26,6 +26,9 @@ class Init(State):
         elif token.kind == 'SCOPE_START':
             super().handle_token(token)
             return InsideBranchScope(self.stack)
+        elif token.kind == 'COMMENT_BLOCK_START':
+            super().handle_token(token)
+            return InsideCommentBlock(self.stack, self)
 
         return self
 
@@ -38,6 +41,9 @@ class BranchStart(State):
         if token.kind == 'BRACE_OPEN':
             super().handle_token(token)
             return InsideBraces(self.stack, self)
+        elif token.kind == 'COMMENT_BLOCK_START':
+            super().handle_token(token)
+            return InsideCommentBlock(self.stack, self)
         elif token.kind == 'SCOPE_START':
             super().handle_token(token)
             return InsideBranchScope(self.stack)
@@ -60,6 +66,9 @@ class InsideBranchScope(State):
         elif token.kind == 'BRANCH_START':
             super().handle_token(token)
             return BranchStart(self.stack)
+        elif token.kind == 'COMMENT_BLOCK_START':
+            super().handle_token(token)
+            return InsideCommentBlock(self.stack, self)
 
         return self
 
@@ -97,6 +106,31 @@ class InsideBraces(State):
             if len(self.stack) > 0:
                 self.stack.pop()
             return self.previous_state
+        elif token.kind == 'COMMENT_BLOCK_START':
+            super().handle_token(token)
+            return InsideCommentBlock(self.stack, self)
+
+        return self
+
+
+class InsideCommentBlock(State):
+    def __init__(self, token_stack, previous_state):
+        super().__init__(token_stack, previous_state)
+
+    def unroll_comment_block(self):
+        while len(self.stack) > 1 and self.stack[-1].kind != 'COMMENT_BLOCK_START':
+            self.stack.pop()
+        self.stack.pop() # removes the comment block start token
+
+        # Continue unrolling until all comments will not be removed
+        for e in self.stack:
+            if e.kind == 'COMMENT_BLOCK_START':
+                self.unroll_comment_block()
+
+    def handle_token(self, token):
+        if token.kind == 'COMMENT_BLOCK_END':
+            self.unroll_comment_block()
+            return self.previous_state
 
         return self
 
@@ -109,6 +143,9 @@ class ExpressionEnd(State):
         if token.kind == 'BRACE_CLOSE':
             super().handle_token(token)
             return InsideBranchScope(self.stack)
+        elif token.kind == 'COMMENT_BLOCK_START':
+            super().handle_token(token)
+            return InsideCommentBlock(self.stack, self)
 
         return self
 
@@ -150,6 +187,8 @@ def core_main():
     tokenizer.add_token('SCOPE_END', r'}', handler_generic)
     tokenizer.add_token('BRACE_OPEN', r'\(', handler_generic)
     tokenizer.add_token('BRACE_CLOSE', r'\)', handler_generic)
+    tokenizer.add_token('COMMENT_BLOCK_START', r'/\*', handler_generic)
+    tokenizer.add_token('COMMENT_BLOCK_END', r'\*/', handler_generic)
     tokenizer.add_token('EXPRESSION_END', r';', handler_generic)
     tokenizer.add_token('MISMATCH', r'.', handler_skip)
 
@@ -170,7 +209,10 @@ def prepare_line_of_code(line):
 def token_should_be_processed(token):
     line = vim.current.buffer[token.line - 1]
     comment_start = line.find('//')
-    if (comment_start != -1 and token.column > comment_start):
+    if (comment_start != -1 and
+        token.column > comment_start and
+        token.kind != 'COMMENT_BLOCK_START' and
+        token.kind != 'COMMENT_BLOCK_END'):
         return False
 
     # define strings aren't part of the code but may contain tokens
