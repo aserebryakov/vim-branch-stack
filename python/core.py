@@ -84,7 +84,6 @@ class ScopeEnd(State):
         super().handle_token(token)
         return next_state(self.stack)
 
-
     def handle_token(self, token):
         if token.kind == 'BRANCH_START':
             return self.unroll_stack(token, BranchStart)
@@ -163,6 +162,7 @@ def handler_newline(match_object, kind, value, keywords, state):
     state['line_start'] = match_object.end()
     state['line_num'] += 1
 
+
 def get_data_range():
     vim.command('normal mz')
     endline = int(vim.eval('line(".")'))
@@ -171,9 +171,8 @@ def get_data_range():
     vim.command("normal 'z")
     return (startline, endline)
 
-def core_main():
-    startline, endline = get_data_range()
 
+def initialize_tokenizer(startline):
     tokenizer = Tokenizer({
         'line_num' : startline,
         'line_start' : 0
@@ -192,7 +191,14 @@ def core_main():
     tokenizer.add_token('EXPRESSION_END', r';', handler_generic)
     tokenizer.add_token('MISMATCH', r'.', handler_skip)
 
+    return tokenizer
+
+
+def core_main():
+    startline, endline = get_data_range()
     data = '\n'.join(vim.current.buffer[startline - 1 : endline - 1])
+
+    tokenizer = initialize_tokenizer(startline)
     estimate_stack(tokenizer.tokenize(data))
 
     vim.command("normal 'z")
@@ -239,4 +245,3 @@ def estimate_stack(tokens):
             token.line,
             ('+' * depth),
             prepare_line_of_code(vim.current.buffer[token.line - 1])))
-
